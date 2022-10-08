@@ -10,6 +10,9 @@ export
 export AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
 export ROOT_DIR ?= $(shell pwd)
 
+# Resource identifiers
+export DATA_BUCKET_NAME ?= ${STAGE}-${APP_NAME}-data-${AWS_ACCOUNT}-${AWS_REGION}
+
 target:
 	$(info ${HELP_MESSAGE})
 	@exit 0
@@ -24,8 +27,8 @@ endif
 ifndef AWS_PROFILE
 $(error AWS_PROFILE is not set. Please select an AWS profile to use.)
 endif
-ifndef ADMIN_EMAIL
-$(error ADMIN_EMAIL is not set. Please add ADMIN_EMAIL to the environment variables.)
+ifndef AWS_REGION
+$(error AWS_REGION is not set. Please add AWS_REGION to the environment variables.)
 endif
 
 deploy: ##=> Deploy services
