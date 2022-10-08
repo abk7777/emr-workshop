@@ -14,10 +14,8 @@ CloudFormation deployments for the [AWS EMR workshop](https://catalog.us-east-1.
   - [Installation](#installation)
     - [Prerequisites](#prerequisites)
   - [Troubleshooting](#troubleshooting)
-  - [Authors](#authors)
   - [References & Links](#references--links)
-    - [Reddit API Reference](#reddit-api-reference)
-    - [Athena Reference](#athena-reference)
+  - [Authors](#authors)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
@@ -154,22 +152,10 @@ coverage run -m pytest
 * Check that the environment variables are available to the services that need them
 * Check that the correct environment or interpreter is being used for Python
 
+## References & Links
+- [AWS EMR workshop](https://catalog.us-east-1.prod.workshops.aws/workshops/c86bd131-f6bf-4e8f-b798-58fd450d3c44/en-US)
+- [EMR documentation](https://docs.aws.amazon.com/emr/index.html)
+- [CloudFormation EMR documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticmapreduce-cluster.html)
+
 ## Authors
 **Primary Contact:** Gregory Lindsey
-
-## References & Links
-
-### Reddit API Reference
-* [Reddit API Access & Terms of Use](https://www.reddit.com/wiki/api/#wiki_reddit_api_access)
-* [Reddit API GitHub Wiki](https://github.com/reddit-archive/reddit/wiki/API)
-* [Reddit API Documentation](https://www.reddit.com/dev/api/)
-
-### Athena Reference
-* [Athena SQL Reference](https://docs.aws.amazon.com/athena/latest/ug/ddl-sql-reference.html)
-* [PrestoDB documentation](https://prestodb.io/docs/current/index.html)
-
------------------
-<br>
-<p align="center">
-  <img src="docs/source/_static/img/Real_Life_Sciences_logo_dark_bg.png" alt="Real Life Sciences">
-</p>
