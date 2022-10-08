@@ -4,3 +4,4 @@ aws-devops-engineer-training/*/.gitignore
 .DS_Store
 *.pem
 .env
+s3/
