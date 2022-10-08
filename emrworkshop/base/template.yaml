@@ -1,0 +1,175 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: VPC for EMR workshop
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcCIDR
+          - PublicSubnet1CIDR
+          - PublicSubnet2CIDR
+    ParameterLabels:
+      VpcCIDR:
+        default: "IP range for new VPC"
+      PublicSubnet1CIDR:
+        default: "Public Subnet 1 IP range"
+      PublicSubnet2CIDR:
+        default: "Public Subnet 2 IP range"
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Stage of production
+  AppName:
+    Type: String
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: hudi-blog
+  VpcCIDR:
+    Description: Enter the IP range (CIDR notation) for this VPC or leave it default
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnet1CIDR:
+    Description: Enter the IP range (CIDR notation) for the public subnet in the first Availability Zone or leave it default
+    Type: String
+    Default: 10.0.1.0/24
+  PublicSubnet2CIDR:
+    Description: Enter the IP range (CIDR notation) for the public subnet in the second Availability Zone or leave it default
+    Type: String
+    Default: 10.0.2.0/24
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      InstanceTenancy: default
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-west-1a
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-west-1b
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Routes
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  EMRS3Bucket:
+   Type: AWS::S3::Bucket
+   Properties:
+     AccessControl: Private
+     BucketEncryption:
+        ServerSideEncryptionConfiguration:
+         - ServerSideEncryptionByDefault:
+            SSEAlgorithm: 'AES256'
+     VersioningConfiguration:
+        Status: Enabled
+        
+  EMRS3BucketNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/EMRS3BucketName'
+      Description: !Sub "Name of ${AppName} data bucket"
+      Value: !Ref EMRS3Bucket
+      Tags:
+        Stage: !Ref Stage
+        AppName: !Ref AppName
+  
+  EMRS3BucketArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/EMRS3BucketArn'
+      Description: !Sub "ARN of ${AppName} data bucket"
+      Value: !GetAtt EMRS3Bucket.Arn
+      Tags:
+        Stage: !Ref Stage
+        AppName: !Ref AppName
+
+  VpcIDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/VpcID'
+      Description: !Sub "Name of ${AppName} VPC network"
+      Value: !Ref VPC
+  
+  PublicSubnet1IDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/PublicSubnet1ID'
+      Description: !Sub "Public Subnet 1 for the ${AppName} EMR cluster"
+      Value: !Ref PublicSubnet1
+
+  PublicSubnet2IDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/PublicSubnet2ID'
+      Description: !Sub "Public Subnet 1 for the ${AppName} EMR cluster"
+      Value: !Ref PublicSubnet2

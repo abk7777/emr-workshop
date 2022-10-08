@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Query Apache Hudi Dataset in an Amazon S3 Data Lake with Amazon Athena
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Stage of production
+  AppName:
+    Type: String
+
+Resources:
+  EmrInstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+         AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Principal:
+                  Service:
+                    - "ec2.amazonaws.com"
+                Action:
+                    - "sts:AssumeRole"
+         Path: "/"
+         ManagedPolicyArns:
+            - 'arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role'
+
+  EMRClusterServiceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+             Effect: Allow
+             Principal:
+               Service:
+                 - 'elasticmapreduce.amazonaws.com'
+             Action:
+               - 'sts:AssumeRole'
+        ManagedPolicyArns:
+            - 'arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole'
+        Path: /
+
+  MyEmrCluster: 
+    Type: AWS::EMR::Cluster
+    Properties:
+      Name: blog-demo
+      JobFlowRole: !Ref EmrInstanceProfile
+      LogUri: !Sub 's3://{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EMRS3BucketArn}}/EMRLOGS/'
+      ReleaseLabel: emr-6.5.0
+      Applications:
+        - Name: Hadoop
+        - Name: JupyterHub
+        - Name: JupyterEnterpriseGateway
+        - Name: Pig
+        - Name: Spark
+        - Name: Tez
+        - Name: Hive
+      Configurations:
+        - Classification: "spark-hive-site"
+          ConfigurationProperties: 
+            hive.metastore.client.factory.class: "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory"
+        - Classification: "hive-site"
+          ConfigurationProperties: 
+            hive.metastore.client.factory.class: "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory"
+            hive.metastore.schema.verification: "false"
+      Instances:
+         MasterInstanceGroup:
+            InstanceCount: 1
+            InstanceType: m5.xlarge
+            Market: ON_DEMAND
+            Name: cfnMaster
+         CoreInstanceGroup:
+            InstanceCount: 2
+            InstanceType: m5.xlarge
+            Market: ON_DEMAND
+            Name: cfnCore
+         Ec2SubnetId: !Sub '{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/PublicSubnet1ID}}'
+         Ec2KeyName: !Sub '{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EC2KeyPairName}}'
+      VisibleToAllUsers: true
+      ServiceRole: !Ref EMRClusterServiceRole
+
+  EmrInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - Ref: "EmrInstanceRole"

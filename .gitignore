@@ -1,0 +1,6 @@
+# Exclude nested git directories
+aws-devops-engineer-training/*/.git/
+aws-devops-engineer-training/*/.gitignore
+.DS_Store
+*.pem
+.env
