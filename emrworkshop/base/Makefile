@@ -32,7 +32,8 @@ service.deploy:
 		--tags stage="$${STAGE}" app="$${APP_NAME}" \
 		--parameter-overrides \
 			Stage="$${STAGE}" \
-			AppName="$${APP_NAME}"
+			AppName="$${APP_NAME}" \
+			DataBucketName="$${DATA_BUCKET_NAME}"
 
 delete: ##=> Delete resources
 	@echo "$$(gdate -u +'%Y-%m-%d %H:%M:%S.%3N') - Deleting ${SERVICE} service"

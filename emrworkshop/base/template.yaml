@@ -41,6 +41,8 @@ Parameters:
     Description: Enter the IP range (CIDR notation) for the public subnet in the second Availability Zone or leave it default
     Type: String
     Default: 10.0.2.0/24
+  DataBucketName:
+    Type: String
 
 Resources:
   VPC:
@@ -54,6 +56,14 @@ Resources:
         - Key: Name
           Value: !Ref EnvironmentName
 
+  VpcIDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/VpcID'
+      Description: !Sub "Name of ${AppName} VPC network"
+      Value: !Ref VPC
+
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -65,6 +75,14 @@ Resources:
         - Key: Name
           Value: !Ref EnvironmentName
 
+  PublicSubnet1IDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/PublicSubnet1ID'
+      Description: !Sub "Public Subnet 1 for the ${AppName} EMR cluster"
+      Value: !Ref PublicSubnet1
+
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
@@ -75,6 +93,14 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref EnvironmentName
+
+  PublicSubnet2IDParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/PublicSubnet2ID'
+      Description: !Sub "Public Subnet 1 for the ${AppName} EMR cluster"
+      Value: !Ref PublicSubnet2
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -150,26 +176,23 @@ Resources:
         Stage: !Ref Stage
         AppName: !Ref AppName
 
-  VpcIDParameter:
-    Type: AWS::SSM::Parameter
+  DataBucket:
+    Type: AWS::S3::Bucket
     Properties:
-      Type: String
-      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/VpcID'
-      Description: !Sub "Name of ${AppName} VPC network"
-      Value: !Ref VPC
-  
-  PublicSubnet1IDParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Type: String
-      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/PublicSubnet1ID'
-      Description: !Sub "Public Subnet 1 for the ${AppName} EMR cluster"
-      Value: !Ref PublicSubnet1
+      BucketName: !Ref DataBucketName
 
-  PublicSubnet2IDParameter:
+  DataBucketNameParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Type: String
-      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/PublicSubnet2ID'
-      Description: !Sub "Public Subnet 1 for the ${AppName} EMR cluster"
-      Value: !Ref PublicSubnet2
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/DataBucketName'
+      Description: !Sub "Name of ${Stage}-${AppName} data bucket"
+      Value: !Ref DataBucket
+  
+  DataBucketArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: !Sub '/${AppName}/${Stage}/${AWS::Region}/DataBucketArn'
+      Description: !Sub "ARN of ${Stage}-${AppName} data bucket"
+      Value: !GetAtt DataBucket.Arn
