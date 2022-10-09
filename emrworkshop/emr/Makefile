@@ -27,6 +27,9 @@ deploy: service.check-key-pair
 	$(MAKE) service.deploy
 	$(MAKE) service.jobs.deploy
 
+service.data.deploy:
+	@bash scripts/load_s3.sh
+
 service.jobs.deploy:
 	@file_path=spark-jobs/spark-etl-01.py && \
 	s3_path=files/spark-etl-01.py && \
@@ -35,6 +38,11 @@ service.jobs.deploy:
 		s3://${DATA_BUCKET_NAME}/$$s3_path
 	@file_path=spark-jobs/spark-etl-02.py && \
 	s3_path=files/spark-etl-02.py && \
+	aws s3 cp \
+		${SERVICE_DIR}/$$file_path \
+		s3://${DATA_BUCKET_NAME}/$$s3_path
+	@file_path=hive-scripts/ny-taxi.hql && \
+	s3_path=files/ny-taxi.hql && \
 	aws s3 cp \
 		${SERVICE_DIR}/$$file_path \
 		s3://${DATA_BUCKET_NAME}/$$s3_path

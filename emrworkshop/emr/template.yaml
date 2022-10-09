@@ -87,6 +87,20 @@ Resources:
               - !Sub 's3://{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/DataBucketName}}/output'
             Jar: 'command-runner.jar'
           ActionOnFailure: CONTINUE
+        - Name: "Hive program"
+          HadoopJarStep:
+            Args:
+            - hive-script 
+            - --run-hive-script 
+            - --args
+            - -f
+            - s3://{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/DataBucketName}}/files/ny-taxi.hql
+            - -d
+            - INPUT=s3://{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/DataBucketName}}/input/
+            - -d
+            - OUTPUT=s3://{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/DataBucketName}}/output/
+            Jar: 'command-runner.jar'
+          ActionOnFailure: CONTINUE
       VisibleToAllUsers: true
       ServiceRole: !Ref EMRClusterServiceRole
 

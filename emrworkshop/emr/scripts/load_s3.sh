@@ -1,10 +1,5 @@
 #! usr/bin/bash
 
-ROOT_DIR=.
-ENV_PATH=$ROOT_DIR/.env
-
-source $ENV_PATH
-
 # Get data bucket name
 DATA_BUCKET_NAME=$(aws ssm get-parameters \
     --names "/${APP_NAME}/${STAGE}/${AWS_REGION}/DataBucketName" \

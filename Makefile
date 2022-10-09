@@ -48,6 +48,7 @@ emr.deploy:
 # Deploy static assets
 static.deploy:
 	$(MAKE) -C ${APP_NAME}/emr/ service.jobs.deploy
+	$(MAKE) -C ${APP_NAME}/emr/ service.data.deploy
 
 delete: ##=> Delete services
 	$(MAKE) base.delete
