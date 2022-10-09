@@ -1,6 +1,6 @@
-SERVICE := emr
+SERVICE := emrpresto
 SERVICE_DIR := ${ROOT_DIR}/${APP_NAME}/${SERVICE}
-EC2_KEY_PAIR_NAME := $${STAGE}-$${APP_NAME}-$${AWS_REGION}-ec2-key-pair
+EC2_KEY_PAIR_NAME := $${STAGE}-$${APP_NAME}-$${AWS_REGION}-emr-presto-key-pair
 
 # test:
 # 	@echo ${SERVICE_DIR}
@@ -25,28 +25,6 @@ service.check-key-pair: ##=> Checks if the key pair already exists and creates i
 deploy: service.check-key-pair
 	@echo "$$(gdate -u +'%Y-%m-%d %H:%M:%S.%3N') - Deploying ${SERVICE} service"
 	$(MAKE) service.deploy
-	$(MAKE) service.jobs.deploy
-
-service.data.deploy:
-	@bash scripts/load_s3.sh
-
-service.jobs.deploy:
-	@file_path=spark-jobs/spark-etl-01.py && \
-	s3_path=files/spark-etl-01.py && \
-	aws s3 cp \
-		${SERVICE_DIR}/$$file_path \
-		s3://${DATA_BUCKET_NAME}/$$s3_path
-	@file_path=spark-jobs/spark-etl-02.py && \
-	s3_path=files/spark-etl-02.py && \
-	aws s3 cp \
-		${SERVICE_DIR}/$$file_path \
-		s3://${DATA_BUCKET_NAME}/$$s3_path
-	@file_path=hive-scripts/ny-taxi.hql && \
-	s3_path=files/ny-taxi.hql && \
-	aws s3 cp \
-		${SERVICE_DIR}/$$file_path \
-		s3://${DATA_BUCKET_NAME}/$$s3_path
-
 
 service.deploy:
 	@echo "$$(gdate -u +'%Y-%m-%d %H:%M:%S.%3N') - Deploying CloudFormation"
@@ -72,7 +50,7 @@ delete.cfn:
 		--stack-name "$${STAGE}-$${APP_NAME}-${SERVICE}" 2>&1 || true
 
 service.delete-key-pair:
-	@aws ec2 delete-key-pair --key-name "${EC2_KEY_PAIR_NAME}" 2>&1 || true && \
+	aws ec2 delete-key-pair --key-name "${EC2_KEY_PAIR_NAME}" 2>&1 || true && \
 	aws ssm delete-parameter --name "/$${APP_NAME}/$${STAGE}/$${AWS_REGION}/EC2KeyPairName" 2>&1 || true
 
 #############

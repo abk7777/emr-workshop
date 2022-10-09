@@ -45,6 +45,9 @@ base.deploy:
 emr.deploy:
 	$(MAKE) -C ${APP_NAME}/emr/ deploy
 
+emrpresto.deploy:
+	$(MAKE) -C ${APP_NAME}/emrpresto/ deploy
+
 # Deploy static assets
 static.deploy:
 	$(MAKE) -C ${APP_NAME}/emr/ service.jobs.deploy
@@ -60,6 +63,9 @@ base.delete:
 
 emr.delete:
 	$(MAKE) -C ${APP_NAME}/emr/ delete
+
+emrpresto.delete:
+	$(MAKE) -C ${APP_NAME}/emrpresto/ delete
 
 define HELP_MESSAGE
 

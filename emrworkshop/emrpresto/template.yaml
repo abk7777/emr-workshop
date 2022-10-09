@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Query S3 using Presto from EMR
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Stage of production
+  AppName:
+    Type: String
+
+Resources:
+
+  EmrWorkshopDatabase:
+    Type: AWS::Glue::Database
+    Properties: 
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: emrworkshop
+
+  PrestoWorkShopCrawlerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSGlueServiceRole'
+      Policies:
+        - PolicyName: S3BucketAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: 
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                Resource: 
+                  - !Sub 'arn:${AWS::Partition}:s3:::serverless-analytics/NYC-transportation/*'
+
+  PrestoWorkShopCrawler:
+    Type: AWS::Glue::Crawler
+    Properties: 
+      DatabaseName: !Ref EmrWorkshopDatabase
+      Role: !GetAtt PrestoWorkShopCrawlerRole.Arn
+      Targets: 
+        S3Targets:
+          - Path: s3://serverless-analytics/NYC-transportation
+
+  PrestoEmrInstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+         AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Principal:
+                  Service:
+                    - "ec2.amazonaws.com"
+                Action:
+                    - "sts:AssumeRole"
+         Path: "/"
+         ManagedPolicyArns:
+            - 'arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role'
+
+  PrestoEmrClusterServiceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+             Effect: Allow
+             Principal:
+               Service:
+                 - 'elasticmapreduce.amazonaws.com'
+             Action:
+               - 'sts:AssumeRole'
+        ManagedPolicyArns:
+            - 'arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole'
+        Path: /
+
+  # MyPrestoEmrCluster: 
+  #   Type: AWS::EMR::Cluster
+  #   Properties:
+  #     Name: blog-demo
+  #     JobFlowRole: !Ref PrestoEmrInstanceProfile
+  #     LogUri: !Sub 's3://{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EMRS3BucketArn}}/EMRLOGS/'
+  #     ReleaseLabel: emr-6.5.0
+  #     Applications:
+  #       - Name: Hadoop
+  #       - Name: Presto
+  #       - Name: Hue
+  #     Configurations:
+  #       - Classification: "presto-connector-hive"
+  #         ConfigurationProperties: 
+  #           hive.metastore: "glue"
+  #     Instances:
+  #        MasterInstanceGroup:
+  #           InstanceCount: 1
+  #           InstanceType: m5.xlarge
+  #           Market: ON_DEMAND
+  #           Name: cfnMaster
+  #        CoreInstanceGroup:
+  #           InstanceCount: 2
+  #           InstanceType: m5.xlarge
+  #           Market: ON_DEMAND
+  #           Name: cfnCore
+  #        Ec2SubnetId: !Sub '{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/PublicSubnet1ID}}'
+  #        Ec2KeyName: !Sub '{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EC2KeyPairName}}'
+  #     VisibleToAllUsers: true
+  #     ServiceRole: !Ref PrestoEmrClusterServiceRole
+
+  PrestoEmrInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - Ref: "PrestoEmrInstanceRole"
