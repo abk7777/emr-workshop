@@ -5,3 +5,4 @@ aws-devops-engineer-training/*/.gitignore
 *.pem
 .env
 s3/
+_.*

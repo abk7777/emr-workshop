@@ -20,6 +20,7 @@ service.check-key-pair: ##=> Checks if the key pair already exists and creates i
 		--type "String" \
 		--value "${EC2_KEY_PAIR_NAME}" \
 		--overwrite 2>&1
+	@echo "Don't forget to udate key permissions using \`chmod 400 ${EC2_KEY_PAIR_NAME}\`"
 
 deploy: service.check-key-pair
 	@echo "$$(gdate -u +'%Y-%m-%d %H:%M:%S.%3N') - Deploying ${SERVICE} service"
@@ -53,15 +54,18 @@ service.deploy:
 
 delete:
 	$(MAKE) delete.cfn
+	$(MAKE) service.delete-key-pair
 
 delete.cfn:
 	@echo "$$(gdate -u +'%Y-%m-%d %H:%M:%S.%3N') - Deleting CloudFormation"
 	@aws cloudformation delete-stack \
-		--stack-name "$${STAGE}-$${APP_NAME}-${SERVICE}" 2>&1 | tee -a $$CFN_LOG_PATH || true && \
-	aws cloudformation wait stack-delete-complete \
-		--stack-name "$${STAGE}-$${APP_NAME}-${SERVICE}" 2>&1 | tee -a $$CFN_LOG_PATH || true && \
-	aws ec2 delete-key-pair --key-name "${EC2_KEY_PAIR_NAME}" 2>&1 | tee -a $$CFN_LOG_PATH || true && \
-	aws ssm delete-parameter --name "/$${APP_NAME}/$${STAGE}/$${AWS_REGION}/EC2KeyPairName" 2>&1 | tee -a $$CFN_LOG_PATH || true
+		--stack-name "$${STAGE}-$${APP_NAME}-${SERVICE}" 2>&1 || true
+	@aws cloudformation wait stack-delete-complete \
+		--stack-name "$${STAGE}-$${APP_NAME}-${SERVICE}" 2>&1 || true
+
+service.delete-key-pair:
+	aws ec2 delete-key-pair --key-name "${EC2_KEY_PAIR_NAME}" 2>&1 || true && \
+	aws ssm delete-parameter --name "/$${APP_NAME}/$${STAGE}/$${AWS_REGION}/EC2KeyPairName" 2>&1 || true
 
 #############
 #  Helpers  #
