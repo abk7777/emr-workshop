@@ -85,36 +85,36 @@ Resources:
             - 'arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole'
         Path: /
 
-  # MyPrestoEmrCluster: 
-  #   Type: AWS::EMR::Cluster
-  #   Properties:
-  #     Name: blog-demo
-  #     JobFlowRole: !Ref PrestoEmrInstanceProfile
-  #     LogUri: !Sub 's3://{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EMRS3BucketArn}}/EMRLOGS/'
-  #     ReleaseLabel: emr-6.5.0
-  #     Applications:
-  #       - Name: Hadoop
-  #       - Name: Presto
-  #       - Name: Hue
-  #     Configurations:
-  #       - Classification: "presto-connector-hive"
-  #         ConfigurationProperties: 
-  #           hive.metastore: "glue"
-  #     Instances:
-  #        MasterInstanceGroup:
-  #           InstanceCount: 1
-  #           InstanceType: m5.xlarge
-  #           Market: ON_DEMAND
-  #           Name: cfnMaster
-  #        CoreInstanceGroup:
-  #           InstanceCount: 2
-  #           InstanceType: m5.xlarge
-  #           Market: ON_DEMAND
-  #           Name: cfnCore
-  #        Ec2SubnetId: !Sub '{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/PublicSubnet1ID}}'
-  #        Ec2KeyName: !Sub '{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EC2KeyPairName}}'
-  #     VisibleToAllUsers: true
-  #     ServiceRole: !Ref PrestoEmrClusterServiceRole
+  MyPrestoEmrCluster: 
+    Type: AWS::EMR::Cluster
+    Properties:
+      Name: blog-demo
+      JobFlowRole: !Ref PrestoEmrInstanceProfile
+      LogUri: !Sub 's3://{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EMRS3BucketArn}}/EMRLOGS/'
+      ReleaseLabel: emr-6.5.0
+      Applications:
+        - Name: Hadoop
+        - Name: Presto
+        - Name: Hue
+      Configurations:
+        - Classification: "presto-connector-hive"
+          ConfigurationProperties: 
+            hive.metastore: "glue"
+      Instances:
+         MasterInstanceGroup:
+            InstanceCount: 1
+            InstanceType: m5.xlarge
+            Market: ON_DEMAND
+            Name: cfnMaster
+         CoreInstanceGroup:
+            InstanceCount: 2
+            InstanceType: m5.xlarge
+            Market: ON_DEMAND
+            Name: cfnCore
+         Ec2SubnetId: !Sub '{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/PublicSubnet1ID}}'
+         Ec2KeyName: !Sub '{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EC2KeyPairName}}'
+      VisibleToAllUsers: true
+      ServiceRole: !Ref PrestoEmrClusterServiceRole
 
   PrestoEmrInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
