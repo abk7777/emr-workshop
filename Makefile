@@ -13,6 +13,9 @@ export ROOT_DIR ?= $(shell pwd)
 # Resource identifiers
 export DATA_BUCKET_NAME ?= ${STAGE}-${APP_NAME}-data-${AWS_ACCOUNT}-${AWS_REGION}
 
+# test:
+# 	$(MAKE) -C ${APP_NAME}/emr/ test
+
 target:
 	$(info ${HELP_MESSAGE})
 	@exit 0
@@ -42,6 +45,9 @@ base.deploy:
 emr.deploy:
 	$(MAKE) -C ${APP_NAME}/emr/ deploy
 
+# Deploy static assets
+static.deploy:
+	$(MAKE) -C ${APP_NAME}/emr/ service.jobs.deploy
 
 delete: ##=> Delete services
 	$(MAKE) base.delete

@@ -1,5 +1,9 @@
 SERVICE := emr
+SERVICE_DIR := ${ROOT_DIR}/${APP_NAME}/${SERVICE}
 EC2_KEY_PAIR_NAME := $${STAGE}-$${APP_NAME}-$${AWS_REGION}-ec2-key-pair
+
+# test:
+# 	@echo ${SERVICE_DIR}
 
 target:
 	$(info ${HELP_MESSAGE})
@@ -20,8 +24,21 @@ service.check-key-pair: ##=> Checks if the key pair already exists and creates i
 deploy: service.check-key-pair
 	@echo "$$(gdate -u +'%Y-%m-%d %H:%M:%S.%3N') - Deploying ${SERVICE} service"
 	$(MAKE) service.deploy
+	$(MAKE) service.jobs.deploy
 
-# TODO test AWSCLI output and validate the stack was created successfully
+service.jobs.deploy:
+	@file_path=spark-jobs/spark-etl-01.py && \
+	s3_path=files/spark-etl-01.py && \
+	aws s3 cp \
+		${SERVICE_DIR}/$$file_path \
+		s3://${DATA_BUCKET_NAME}/$$s3_path
+	@file_path=spark-jobs/spark-etl-02.py && \
+	s3_path=files/spark-etl-02.py && \
+	aws s3 cp \
+		${SERVICE_DIR}/$$file_path \
+		s3://${DATA_BUCKET_NAME}/$$s3_path
+
+
 service.deploy:
 	@echo "$$(gdate -u +'%Y-%m-%d %H:%M:%S.%3N') - Deploying CloudFormation"
 	@aws cloudformation deploy \
