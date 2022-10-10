@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Query S3 using Presto from EMR
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Stage of production
+  AppName:
+    Type: String
+
+Resources:
+  EmrScalingInstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role"
+
+  EmrScalingClusterServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service:
+              - "elasticmapreduce.amazonaws.com"
+          Action:
+            - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole"
+      Path: /
+
+  EmrScalingCluster:
+    Type: AWS::EMR::Cluster
+    Properties:
+      Name: blog-demo
+      JobFlowRole: !Ref EmrScalingInstanceProfile
+      LogUri: !Sub "s3://{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EMRS3BucketArn}}/EMRLOGS/"
+      ReleaseLabel: emr-5.33.0
+      Applications:
+        - Name: Hadoop
+        - Name: Hive
+        - Name: Tez
+        - Name: Hue
+        - Name: Spark
+        - Name: Livy
+      Instances:
+        MasterInstanceGroup:
+          InstanceCount: 1
+          InstanceType: m5.xlarge
+          Market: ON_DEMAND
+          Name: cfnMaster
+        CoreInstanceGroup:
+          InstanceCount: 1
+          InstanceType: r5.xlarge
+          Market: ON_DEMAND
+          Name: cfnCore
+        TaskInstanceGroups:
+          - InstanceCount: 1
+            InstanceType: r5.xlarge
+            Market: ON_DEMAND
+            Name: cfnTask1
+        Ec2SubnetId: !Sub "{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/PublicSubnet1ID}}"
+        Ec2KeyName: !Sub "{{resolve:ssm:/${AppName}/${Stage}/${AWS::Region}/EC2KeyPairName}}"
+      VisibleToAllUsers: true
+      ServiceRole: !Ref EmrScalingClusterServiceRole
+      ManagedScalingPolicy:
+        ComputeLimits:
+          MinimumCapacityUnits: 1
+          MaximumCapacityUnits: 5
+          MaximumOnDemandCapacityUnits: 2
+          UnitType: Instances
+
+
+  EmrScalingInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - Ref: "EmrScalingInstanceRole"
