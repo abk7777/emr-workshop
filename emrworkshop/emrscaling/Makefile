@@ -53,10 +53,18 @@ service.deploy:
 			AppName="$${APP_NAME}"
 
 delete:
-	$(MAKE) delete.cfn
+	$(MAKE) delete.service.dashboard
+	$(MAKE) delete.service
 	$(MAKE) service.delete-key-pair
 
-delete.cfn:
+delete.service.dashboard:
+	@echo "$$(gdate -u +'%Y-%m-%d %H:%M:%S.%3N') - Deleting CloudFormation"
+	@aws cloudformation delete-stack \
+		--stack-name "$${STAGE}-$${APP_NAME}-${SERVICE}-dashboard" 2>&1 || true
+	@aws cloudformation wait stack-delete-complete \
+		--stack-name "$${STAGE}-$${APP_NAME}-${SERVICE}-dashboard" 2>&1 || true
+
+delete.service:
 	@echo "$$(gdate -u +'%Y-%m-%d %H:%M:%S.%3N') - Deleting CloudFormation"
 	@aws cloudformation delete-stack \
 		--stack-name "$${STAGE}-$${APP_NAME}-${SERVICE}" 2>&1 || true
